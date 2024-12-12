@@ -45,5 +45,13 @@ public class SignalEmitter : MonoBehaviour
             Assert.AreEqual(System.Math.Round(expected[i].Real, 4), System.Math.Round(result[i].Real, 4));
             Assert.AreEqual(System.Math.Round(expected[i].Imaginary, 4), System.Math.Round(result[i].Imaginary, 4));
         }
+
+        result = FFT.Inverse(result);
+
+        for (int i = 0; i < result.Length; i++)
+        {
+            Assert.AreEqual(System.Math.Round(signal[i].Real, 4), System.Math.Round(result[i].Real, 4));
+            Assert.AreEqual(System.Math.Round(signal[i].Imaginary, 4), System.Math.Round(result[i].Imaginary, 4));
+        }
     }
 }

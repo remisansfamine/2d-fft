@@ -41,4 +41,25 @@ public class FFT
 
         return result;
     }
+
+    static public Complex[] Inverse(Complex[] input)
+    {
+        int n = input.Length;
+
+        for (int i = 0; i < n; i++)
+        {
+            input[i] = Complex.Conjugate(input[i]);
+        }
+
+        Complex[] transform = Forward(input);
+
+        float inverseN = 1f / n;
+
+        for (int i = 0; i < n; i++)
+        {
+            transform[i] = Complex.Conjugate(transform[i]) * inverseN;
+        }
+
+        return transform;
+    }
 }
