@@ -5045,6 +5045,8 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  _currentBrush: {fileID: 2800000, guid: 321d71692d7f3814f8e10cb8362f91b9, type: 3}
+  _currentBrushSize: {x: 5, y: 5}
   MR_Source: {fileID: 234071478}
   MR_Fourier: {fileID: 1523873098}
   MR_Filter: {fileID: 1972969801}
