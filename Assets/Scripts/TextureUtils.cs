@@ -27,7 +27,7 @@ static public class TextureUtils
 	}
 
 	
-	static private void FloatToTexture(float[][] input, int width, int height, int channel, ref Texture2D texture)
+	static private void FloatToTexture(float[][] input, int width, int height, int channel, ref Color[] texture)
 	{
 		( float _, float max ) = FFTUtils.GetMinMax(input, width, height);
 		float imax = 1f / max;
@@ -36,19 +36,13 @@ static public class TextureUtils
 		{
 			for (int j = 0; j < height; j++)
 			{
-				Color pixel = texture.GetPixel(i, j);
-
-				pixel[channel] = input[i][j] * imax;
-
-				texture.SetPixel(i, j, pixel);
+				texture[j * width + i][channel] = input[i][j] * imax;
 			}
 		}
-
-		texture.Apply();
 	}
 
 	static private void FloatToTextureRemapped(float[][] input, int width, int height, int channel,
-													   ref Texture2D texture, AnimationCurve curve)
+													   ref Color[] texture, AnimationCurve curve)
 	{
 		( float min, float max ) = FFTUtils.GetMinMax(input, width, height);
 
@@ -56,25 +50,19 @@ static public class TextureUtils
 		{
 			for (int j = 0; j < height; j++)
 			{
-				Color pixel = texture.GetPixel(i, j);
-
-				pixel[channel] = curve.Evaluate(FFTUtils.Remap(input[i][j], min, max, 0f, 1f));
-
-				texture.SetPixel(i, j, pixel);
+				texture[j * width + i][channel] = curve.Evaluate(FFTUtils.Remap(input[i][j], min, max, 0f, 1f));
 			}
 		}
-
-		texture.Apply();
 	}
 
-	static public void FillTextureChannelFromComplex(Complex[][] input, int width, int height, int channel, ref Texture2D texture)
+	static public void FillTextureChannelFromComplex(Complex[][] input, int width, int height, int channel, ref Color[] texture)
 	{
 		float[][] f = FFTUtils.ComplexToFloat(input, width, height);
 		FloatToTexture(f, width, height, channel, ref texture);
 	}
 
 	static public void FillTextureChannelFromComplexSpectrum(Complex[][] input, int width, int height, int channel,
-															 ref Texture2D texture, AnimationCurve curve, bool offset = true)
+															 ref Color[] texture, AnimationCurve curve, bool offset = true)
 	{
 		float[][] f = FFTUtils.ComplexToFloatLogged(offset ? FFTUtils.OffsetHalf(input, width, height) : input, width, height);
 

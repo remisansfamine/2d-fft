@@ -25,7 +25,7 @@ public class SignalEmitter2DCompress : MonoBehaviour
     [SerializeField] private TMP_Text _textTextures;
     [SerializeField] private TMP_Text _percentText;
 
-    [SerializeField] private Scrollbar _scrollbar;
+    [SerializeField] private Slider _scrollbar;
 
     private float _compressionPercent;
     
@@ -46,14 +46,14 @@ public class SignalEmitter2DCompress : MonoBehaviour
 
     private void SetCompressionPercent(float percent)
     {
-        _compressionPercent = percent;
-        _percentText.text = $"{_compressionPercent * 100}%";
+        _compressionPercent = percent * 0.01f;
+        _percentText.text = $"{percent}%";
     }
 
     private void Start()
     {
         ScrollTexture(0);
-        SetCompressionPercent(0.5f);
+        SetCompressionPercent(50f);
     }
 
     public void Process()
@@ -63,39 +63,51 @@ public class SignalEmitter2DCompress : MonoBehaviour
         int width = texture.width;
         int height = texture.height;
         
+        float percent_dec = 1 - _compressionPercent;
+        
+        float scale = 10 * percent_dec;
+        MR_Compressed.transform.localScale = new Vector3(scale, scale, scale);
+
+        int compressedWidth = Mathf.FloorToInt(width * percent_dec * 0.5f) * 2 + width % 2;
+        int compressedHeight =  Mathf.FloorToInt(height * percent_dec * 0.5f) * 2 + height % 2;
+        
         Texture2D fourierTexture = new Texture2D(width, height);
-        Texture2D compressedTexture = null;
+        Texture2D compressedTexture = new Texture2D(compressedWidth, compressedHeight);
         Texture2D targetTexture = new Texture2D(width, height);
-
+        
+        Color[] fourierColors = fourierTexture.GetPixels();
+        Color[] compressedColors = compressedTexture.GetPixels();
+        Color[] targetColors = targetTexture.GetPixels();
+        
         fourierTexture.filterMode = FilterMode.Point;
+        compressedTexture.filterMode = FilterMode.Point;
         targetTexture.filterMode = FilterMode.Point;
-
+        
         for (int i = 0; i < 3; i++)
         {
             Complex[][] complexTexture = TextureUtils.TextureToComplex(texture, i);
 
             Complex[][] fourierSource = FFT2D.Forward(complexTexture);
 
-            TextureUtils.FillTextureChannelFromComplexSpectrum(fourierSource, width, height, i, ref fourierTexture, _spectrumRemapCurve);
+            TextureUtils.FillTextureChannelFromComplexSpectrum(fourierSource, width, height, i, ref fourierColors, _spectrumRemapCurve);
 
             Complex[][] compressedFourier = FFTUtils.CompressByPercentage(fourierSource, width, height, out int compWidth, out int compHeight, _compressionPercent);
 
-            if (compressedTexture == null)
-            {
-                float scale = 10 * (1 - _compressionPercent);
-                MR_Compressed.transform.localScale = new Vector3(scale, scale, scale);
-                compressedTexture = new Texture2D(compWidth, compHeight);
-                compressedTexture.filterMode = FilterMode.Point;
-            }
-
-            TextureUtils.FillTextureChannelFromComplexSpectrum(compressedFourier, compWidth, compHeight, i, ref compressedTexture, _spectrumRemapCurve, false);
+            TextureUtils.FillTextureChannelFromComplexSpectrum(compressedFourier, compWidth, compHeight, i, ref compressedColors, _spectrumRemapCurve, false);
 
             Complex[][] extractedFourier = FFTUtils.Extract(compressedFourier, compWidth, compHeight, width, height);
             Complex[][] inverseFourier = FFT2D.Inverse(extractedFourier);
 
-            TextureUtils.FillTextureChannelFromComplex(inverseFourier, width, height, i, ref targetTexture);
+            TextureUtils.FillTextureChannelFromComplex(inverseFourier, width, height, i, ref targetColors);
         }
-
+        
+        fourierTexture.SetPixels(fourierColors);
+        fourierTexture.Apply();
+        compressedTexture.SetPixels(compressedColors);
+        compressedTexture.Apply();
+        targetTexture.SetPixels(targetColors);
+        targetTexture.Apply();
+        
         MR_Fourier.material.mainTexture = fourierTexture;
         MR_Compressed.material.mainTexture = compressedTexture;
         MR_Target.material.mainTexture = targetTexture;
