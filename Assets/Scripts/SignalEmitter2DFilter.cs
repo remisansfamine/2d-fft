@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Numerics;
 using UnityEngine;
+using UnityEngine.Windows;
 using TMPro;
 
 using UnityEditor;
@@ -10,15 +11,12 @@ using UnityEditor;
 
 public class SignalEmitter2DFilter : MonoBehaviour
 {
-    private RenderTexture _drawableTexture;
     [SerializeField] private Texture2D _texture;
 
     [Header("Parameters")]
     [SerializeField] private Texture2D[] _textures;
     [SerializeField] private Texture2D[] _filters;
     [SerializeField] private AnimationCurve _spectrumRemapCurve;
-    [SerializeField] private Texture2D _currentBrush;
-    [SerializeField] private UnityEngine.Vector2 _currentBrushSize = new UnityEngine.Vector2(10f, 10f);
 
     [Header("UI")]
     [SerializeField] private MeshRenderer MR_Source;
@@ -45,50 +43,15 @@ public class SignalEmitter2DFilter : MonoBehaviour
     public void ScrollFilters(int add)
     {
         _currentFilter = (_currentFilter + add + _filters.Length) % _filters.Length;
-        Graphics.Blit(_filters[_currentFilter], _drawableTexture);
+        MR_Filter.material.mainTexture = _filters[_currentFilter];
         _textFilters.text = _filters[_currentFilter].name;
-    }
 
-    private void InitializeFilterTexture()
-    {
-        Texture2D texture = _textures[_currentTexture];
-
-        int width = texture.width;
-        int height = texture.height;
-
-        _drawableTexture = new RenderTexture(width, height, 16, RenderTextureFormat.ARGB32);
-        _drawableTexture.Create();
-
-        MR_Filter.material.mainTexture = _drawableTexture;
     }
 
     private void Start()
     {
-        InitializeFilterTexture();
         ScrollTexture(0);
         ScrollFilters(0);
-    }
-
-    private void OnDestroy()
-    {
-        _drawableTexture?.Release();
-    }
-
-    private void Update()
-    {
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity) && Input.GetMouseButtonDown(0))
-        {
-            if (hit.transform.gameObject == MR_Filter.gameObject)
-            {
-                UnityEngine.Vector2 uv = hit.textureCoord;
-
-                int x = (int)(uv.x * _drawableTexture.width);
-                int y = (int)(uv.y * _drawableTexture.height);
-
-                Graphics.Blit(_currentBrush, _drawableTexture, _currentBrushSize, new UnityEngine.Vector2(x, y));
-            }
-        }
     }
 
     public void Process()
