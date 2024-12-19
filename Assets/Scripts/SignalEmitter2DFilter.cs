@@ -5,7 +5,11 @@ using UnityEngine;
 using UnityEngine.Windows;
 using TMPro;
 
-public class SignalEmitter2D : MonoBehaviour
+using UnityEditor;
+
+
+
+public class SignalEmitter2DFilter : MonoBehaviour
 {
     [SerializeField] private Texture2D _texture;
 
@@ -68,47 +72,30 @@ public class SignalEmitter2D : MonoBehaviour
         filteredTexture.filterMode = FilterMode.Point;
         targetTexture.filterMode = FilterMode.Point;
 
-        /*
-        for (int i = 0; i < width; i++)
-        {
-            for (int j = 0; j < height; j++)
-            {
-                fourierTexture.SetPixel(i, j, new Color(0, 0, 0, 1f));
-                filterInverseTexture.SetPixel(i, j, new Color(0, 0, 0, 1f));
-                filteredTexture.SetPixel(i, j, new Color(0, 0, 0, 1f));
-                targetTexture.SetPixel(i, j, new Color(0, 0, 0, 1f));
-            }
-        }
-
-        fourierTexture.Apply();
-        filterInverseTexture.Apply();
-        filteredTexture.Apply();
-        targetTexture.Apply();
-        */
-
         Color[] filterColors = filter.GetPixels();
 
         for (int i = 0; i < 3; i++)
         {
-            Complex[][] complexTexture = FFT2D.TextureToComplex(texture, i);
+            Complex[][] complexTexture = TextureUtils.TextureToComplex(texture, i);
 
             Complex[][] fourierSource = FFT2D.Forward(complexTexture);
 
-            FFT2D.FillTextureChannelFromComplexSpectrum(fourierSource, width, height, i, ref fourierTexture, _spectrumRemapCurve);
+            TextureUtils.FillTextureChannelFromComplexSpectrum(fourierSource, width, height, i, ref fourierTexture, _spectrumRemapCurve);
 
-            Complex[][] filteredFourier = FFT2D.MultiplyByColorChannel(fourierSource, filterColors, width, height, i);
+            Complex[][] filteredFourier = FFTUtils.MultiplyByColorChannel(fourierSource, filterColors, width, height, i);
 
-            FFT2D.FillTextureChannelFromComplexSpectrum(filteredFourier, width, height, i, ref filteredTexture, _spectrumRemapCurve);
+            TextureUtils.FillTextureChannelFromComplexSpectrum(filteredFourier, width, height, i, ref filteredTexture, _spectrumRemapCurve);
 
             Complex[][] inverseFourier = FFT2D.Inverse(filteredFourier);
 
-            FFT2D.FillTextureChannelFromComplex(inverseFourier, width, height, i, ref targetTexture);
+            TextureUtils.FillTextureChannelFromComplex(inverseFourier, width, height, i, ref targetTexture);
 
-            Complex[][] filterComplex = FFT2D.TextureToComplex(filter, i);
-            filterComplex = FFT2D.OffsetHalf(filterComplex, width, height);
-            Complex[][] filterInverse = FFT2D.Inverse(filterComplex);
+            Complex[][] filterComplex = TextureUtils.TextureToComplex(filter, i);
+            filterComplex = FFTUtils.OffsetHalf(filterComplex, width, height);
+            Complex[][] filterInverse = FFT2D.Forward(filterComplex);
 
-            FFT2D.FillTextureChannelFromComplex(filterInverse, width, height, i, ref filterInverseTexture);
+            TextureUtils.FillTextureChannelFromComplexSpectrum(filterInverse, width, height, i, ref filterInverseTexture, _spectrumRemapCurve);
+            //TextureUtils.FillTextureChannelFromComplex(filterInverse, width, height, i, ref filterInverseTexture);
         }
 
         MR_Fourier.material.mainTexture = fourierTexture;

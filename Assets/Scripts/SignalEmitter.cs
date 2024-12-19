@@ -14,8 +14,7 @@ public class SignalEmitter : MonoBehaviour
 
     public void FourierTest()
     {
-        Complex[] signal = new[]
-        {
+        Complex[] signal = {
             new Complex(0,0),
             new Complex(1,0),
             new Complex(2,0),
@@ -28,8 +27,7 @@ public class SignalEmitter : MonoBehaviour
 
         Complex[] result = FFT.Forward(signal);
 
-        Complex[] expected = new[]
-        {
+        Complex[] expected = {
             new Complex(28, 0),
             new Complex(-4.0f, 9.6569f),
             new Complex(-4.0f, 4.0f),
